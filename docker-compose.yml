@@ -5,6 +5,7 @@ services:
       - "3001:3001"
     environment:
       - PORT=3001
+      - DATABASE_URL=postgresql://spotistats:devpassword@postgres:5432/spotistats
     depends_on:
       - postgres
       - redis
