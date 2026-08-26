@@ -26,7 +26,18 @@ app.get("/auth/callback", async (req, res) => {
         }
     )
 
-    res.json(response.data)
+    const profileResponse = await axios.get('https://api.spotify.com/v1/me', {
+        headers: {
+            'Authorization': 'Bearer ' + response.data.access_token
+        }
+    })
+
+    const token_expires_at = new Date(Date.now() + response.data.expires_in * 1000)
+
+    await pool.query('INSERT INTO users (spotify_id, access_token, refresh_token, token_expires_at) VALUES ($1, $2, $3, $4)', [profileResponse.data.id, response.data.access_token, response.data.refresh_token, token_expires_at])
+
+    res.json({ message: "Successfully connected to Spotify"})
+
 })
 
 app.get("/auth/login", (req, res) => {
