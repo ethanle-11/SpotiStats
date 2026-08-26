@@ -34,7 +34,16 @@ app.get("/auth/callback", async (req, res) => {
 
     const token_expires_at = new Date(Date.now() + response.data.expires_in * 1000)
 
-    await pool.query('INSERT INTO users (spotify_id, access_token, refresh_token, token_expires_at) VALUES ($1, $2, $3, $4)', [profileResponse.data.id, response.data.access_token, response.data.refresh_token, token_expires_at])
+    await pool.query(`
+        INSERT INTO users (spotify_id, access_token, refresh_token, token_expires_at)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (spotify_id)
+        DO UPDATE SET
+            access_token = $2,
+            refresh_token = $3,
+            token_expires_at = $4`, 
+        [profileResponse.data.id, response.data.access_token, response.data.refresh_token, token_expires_at]
+    )
 
     res.json({ message: "Successfully connected to Spotify"})
 
