@@ -30,6 +30,8 @@ services:
   
   worker:
     build: ./worker
+    env_file:
+      - ./server/.env
     environment:
       - DATABASE_URL=postgresql://spotistats:devpassword@postgres:5432/spotistats
     depends_on:

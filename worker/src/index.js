@@ -1,5 +1,8 @@
 import { Worker } from 'bullmq'
+import pool from './db.js'
+import axios from 'axios'
 import 'dotenv/config'
+import refreshAccessToken from './refreshToken.js'
 
 const connection = {
     host: 'redis',
@@ -7,7 +10,37 @@ const connection = {
 }
 
 const pollUser = async (job) => {
-    console.log("Processing job: ", job.data)
+    const userId = job.data.userId
+
+    const result = await pool.query(`
+        SELECT access_token, refresh_token, token_expires_at
+        FROM users
+        WHERE id = $1`,
+        [userId]
+    )
+
+    const { refresh_token, token_expires_at } = result.rows[0]
+    let access_token = result.rows[0].access_token
+
+    if (Date.now() > token_expires_at.getTime()) {
+        access_token = await refreshAccessToken(userId, refresh_token)
+    }
+
+    const listeningData = await axios.get('https://api.spotify.com/v1/me/player/recently-played', {
+        headers: {
+            'Authorization': 'Bearer ' + access_token
+        }
+    })
+
+    for (const item of listeningData.data.items) {
+        await pool.query(`
+            INSERT INTO listening_events (user_id, track_id, track_name, artist_name, duration_ms, played_at)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (user_id, track_id, played_at) DO NOTHING`,
+            [userId, item.track.id, item.track.name, item.track.artists[0].name, item.track.duration_ms, item.played_at]
+        )
+    }
+
 }
 
 const spotifyPoller = new Worker('spotify-polling', pollUser, { connection })

@@ -1,3 +1,3 @@
 import spotifyQueue from "./queue.js";
 
-spotifyQueue.add('test-job', { userId: 123 })
+spotifyQueue.add('test-job', { userId: 1 })
