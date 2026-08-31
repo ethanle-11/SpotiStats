@@ -1,7 +1,8 @@
+import 'dotenv/config'
 import { Worker } from 'bullmq'
 import pool from './db.js'
 import axios from 'axios'
-import 'dotenv/config'
+
 import refreshAccessToken from './refreshToken.js'
 
 const connection = {
