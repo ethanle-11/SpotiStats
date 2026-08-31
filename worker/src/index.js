@@ -35,10 +35,12 @@ const pollUser = async (job) => {
 
     for (const item of listeningData.data.items) {
         await pool.query(`
-            INSERT INTO listening_events (user_id, track_id, track_name, artist_name, duration_ms, played_at)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO listening_events (
+                user_id, track_id, track_name, artist_name, duration_ms, played_at, artist_id, album_id, album_name, album_image_url
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             ON CONFLICT (user_id, track_id, played_at) DO NOTHING`,
-            [userId, item.track.id, item.track.name, item.track.artists[0].name, item.track.duration_ms, item.played_at]
+            [userId, item.track.id, item.track.name, item.track.artists[0].name, item.track.duration_ms, item.played_at, item.track.artists[0].id, item.track.album.id, item.track.album.name, item.track.album.images[0].url]
         )
     }
 

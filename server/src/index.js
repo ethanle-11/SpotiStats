@@ -49,11 +49,21 @@ app.get("/auth/callback", async (req, res) => {
 
     const userId = result.rows[0].id
 
-    spotifyQueue.add('poll-user', { userId }, {
-        repeat: {
-            every: 15 * 60 * 1000
-        }
-    })
+   
+
+    try {
+        await spotifyQueue.upsertJobScheduler(
+            `poll-user-${userId}`,
+            { every: 15 * 60 * 1000 },
+            {
+                name: 'poll-user',
+                data: { userId }
+            }
+        )
+        console.log("Job scheduled for user:", userId)
+    } catch {
+        console.log("Failed to create job scheduler:", err.message)
+    }
 
     res.json({ message: "Successfully connected to Spotify"})
 
@@ -93,9 +103,32 @@ app.get("/stats/dashboard/:userId", async (req, res) => {
         [userId]
     )
 
+    const listeningTimeResults = await pool.query(`
+        SELECT SUM(duration_ms) as total_duration_ms
+        FROM listening_events
+        WHERE user_id = $1`,
+        [userId]
+    )
+    const duration_minutes = Math.round(listeningTimeResults.rows[0].total_duration_ms / 60000)
+
+    const uniqueTrackResults = await pool.query(`
+        SELECT COUNT(DISTINCT track_id) as unique_tracks
+        FROM listening_events
+        WHERE user_id = $1`,
+        [userId]
+    )
+    const uniqueArtistResults = await pool.query(`
+        SELECT COUNT(DISTINCT track_id) as unique_tracks
+        FROM listening_events
+        WHERE user_id = $1`,
+        [userId]
+    )
+
     res.json({
         topTracks: topTrackResults.rows,
-        topArtists: topArtistResults.rows
+        topArtists: topArtistResults.rows,
+        listeningTime: duration_minutes,
+        uniqueTracks: uniqueTrackResults.rows[0].unique_tracks
     })
 })
 
