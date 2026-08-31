@@ -70,6 +70,35 @@ app.get("/auth/login", (req, res) => {
     res.redirect(`https://accounts.spotify.com/authorize?${params.toString()}`)
 })
 
+// Stat computing routes
+
+app.get("/stats/dashboard/:userId", async (req, res) => {
+    const userId = req.params.userId
+
+    const topTrackResults = await pool.query(`
+        SELECT track_id, track_name, artist_name, COUNT(*) as play_count
+        FROM listening_events
+        WHERE user_id = $1
+        GROUP BY track_id, track_name, artist_name
+        ORDER BY play_count DESC`,
+        [userId]
+    )
+
+    const topArtistResults = await pool.query(`
+        SELECT artist_name, COUNT(*) as play_count
+        FROM listening_events
+        WHERE user_id = $1
+        GROUP BY artist_name
+        ORDER BY play_count DESC`,
+        [userId]
+    )
+
+    res.json({
+        topTracks: topTrackResults.rows,
+        topArtists: topArtistResults.rows
+    })
+})
+
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
