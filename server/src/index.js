@@ -80,7 +80,7 @@ app.get("/auth/login", (req, res) => {
     res.redirect(`https://accounts.spotify.com/authorize?${params.toString()}`)
 })
 
-// Stat computing routes
+// dashboard route
 
 app.get("/stats/dashboard/:userId", async (req, res) => {
     const userId = req.params.userId
@@ -88,7 +88,8 @@ app.get("/stats/dashboard/:userId", async (req, res) => {
     const topTrackResults = await pool.query(`
         SELECT track_id, track_name, artist_name, COUNT(*) as play_count
         FROM listening_events
-        WHERE user_id = $1
+        JOIN users ON listening_events.user_id = users.id
+        WHERE user_id = $1 AND listening_events.played_at >= users.tracking_started_at
         GROUP BY track_id, track_name, artist_name
         ORDER BY play_count DESC
         LIMIT 5`,
@@ -98,7 +99,8 @@ app.get("/stats/dashboard/:userId", async (req, res) => {
     const topArtistResults = await pool.query(`
         SELECT artist_name, COUNT(*) as play_count
         FROM listening_events
-        WHERE user_id = $1
+        JOIN users ON listening_events.user_id = users.id        
+        WHERE user_id = $1 AND listening_events.played_at >= users.tracking_started_at
         GROUP BY artist_name
         ORDER BY play_count DESC
         LIMIT 5`,
@@ -108,7 +110,8 @@ app.get("/stats/dashboard/:userId", async (req, res) => {
     const topAlbumResults = await pool.query(`
         SELECT album_id, album_name, COUNT(*) as play_count
         FROM listening_events
-        WHERE user_id = $1 AND album_id IS NOT NULL
+        JOIN users ON listening_events.user_id = users.id
+        WHERE user_id = $1 AND album_id IS NOT NULL AND listening_events.played_at >= users.tracking_started_at
         GROUP BY album_id, album_name
         ORDER by play_count DESC
         LIMIT 5`,
@@ -118,7 +121,8 @@ app.get("/stats/dashboard/:userId", async (req, res) => {
     const listeningTimeResults = await pool.query(`
         SELECT SUM(duration_ms) as total_duration_ms
         FROM listening_events
-        WHERE user_id = $1`,
+        JOIN users ON listening_events.user_id = users.id
+        WHERE user_id = $1 AND listening_events.played_at >= users.tracking_started_at`,
         [userId]
     )
     const duration_minutes = Math.round(listeningTimeResults.rows[0].total_duration_ms / 60000)
@@ -126,21 +130,24 @@ app.get("/stats/dashboard/:userId", async (req, res) => {
     const uniqueTrackResults = await pool.query(`
         SELECT COUNT(DISTINCT track_id) as unique_tracks
         FROM listening_events
-        WHERE user_id = $1`,
+        JOIN users ON listening_events.user_id = users.id
+        WHERE user_id = $1 AND listening_events.played_at >= users.tracking_started_at`,
         [userId]
     )
 
     const uniqueArtistResults = await pool.query(`
         SELECT COUNT(DISTINCT artist_id) as unique_artists
         FROM listening_events
-        WHERE user_id = $1`,
+        JOIN users ON listening_events.user_id = users.id
+        WHERE user_id = $1 AND listening_events.played_at >= users.tracking_started_at`,
         [userId]
     )
 
     const uniqueAlbumResults = await pool.query(`
         SELECT COUNT(DISTINCT album_id) as unique_albums
         FROM listening_events
-        WHERE user_id = $1 and album_id IS NOT NULL`,
+        JOIN users ON listening_events.user_id = users.id
+        WHERE user_id = $1 and album_id IS NOT NULL AND listening_events.played_at >= users.tracking_started_at`,
         [userId]
     )
 
