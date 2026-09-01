@@ -2,11 +2,9 @@ import express from 'express'
 import pool from './db.js'
 import axios from 'axios'
 import spotifyQueue from './queue.js'
-<<<<<<< HEAD
-import redisConnection from './redisClient.js'
-=======
 import session from 'express-session'
->>>>>>> 442097c64c90f21e4827468200df86a66e466266
+import redisConnection from './redisClient.js'
+import { RedisStore } from 'connect-redis'
 
 const app = express()
 
@@ -14,7 +12,8 @@ app.use(express.json())
 app.use(session({
         secret: process.env.SESSION_SECRET,
         resave: false,
-        saveUninitialized: false
+        saveUninitialized: false,
+        store: new RedisStore({ client: redisConnection })
     }))
 
 app.get("/auth/callback", async (req, res) => {
@@ -60,8 +59,6 @@ app.get("/auth/callback", async (req, res) => {
     const userId = result.rows[0].id
     req.session.userId = userId
 
-   
-
     try {
         await spotifyQueue.upsertJobScheduler(
             `poll-user-${userId}`,
@@ -72,7 +69,7 @@ app.get("/auth/callback", async (req, res) => {
             }
         )
         console.log("Job scheduled for user:", userId)
-    } catch {
+    } catch (err) {
         console.log("Failed to create job scheduler:", err.message)
     }
     
