@@ -2,10 +2,16 @@ import express from 'express'
 import pool from './db.js'
 import axios from 'axios'
 import spotifyQueue from './queue.js'
+import session from 'express-session'
 
 const app = express()
 
 app.use(express.json())
+app.use(session({
+        secret: process.env.SESSION_SECRET,
+        resave: false,
+        saveUninitialized: false
+    }))
 
 app.get("/auth/callback", async (req, res) => {
     const code = req.query.code
@@ -48,6 +54,7 @@ app.get("/auth/callback", async (req, res) => {
     )
 
     const userId = result.rows[0].id
+    req.session.userId = userId
 
    
 
@@ -64,8 +71,8 @@ app.get("/auth/callback", async (req, res) => {
     } catch {
         console.log("Failed to create job scheduler:", err.message)
     }
-
-    res.json({ message: "Successfully connected to Spotify"})
+    
+    res.redirect(`/stats/dashboard`)
 
 })
 
@@ -82,8 +89,11 @@ app.get("/auth/login", (req, res) => {
 
 // dashboard route
 
-app.get("/stats/dashboard/:userId", async (req, res) => {
-    const userId = req.params.userId
+app.get("/stats/dashboard", async (req, res) => {
+    const userId = req.session.userId
+    if (!userId) {
+        return res.redirect(`/auth/login`)
+    }
 
     const topTrackResults = await pool.query(`
         SELECT track_id, track_name, artist_name, COUNT(*) as play_count
