@@ -90,7 +90,8 @@ app.get("/stats/dashboard/:userId", async (req, res) => {
         FROM listening_events
         WHERE user_id = $1
         GROUP BY track_id, track_name, artist_name
-        ORDER BY play_count DESC`,
+        ORDER BY play_count DESC
+        LIMIT 5`,
         [userId]
     )
 
@@ -99,7 +100,18 @@ app.get("/stats/dashboard/:userId", async (req, res) => {
         FROM listening_events
         WHERE user_id = $1
         GROUP BY artist_name
-        ORDER BY play_count DESC`,
+        ORDER BY play_count DESC
+        LIMIT 5`,
+        [userId]
+    )
+
+    const topAlbumResults = await pool.query(`
+        SELECT album_id, album_name, COUNT(*) as play_count
+        FROM listening_events
+        WHERE user_id = $1 AND album_id IS NOT NULL
+        GROUP BY album_id, album_name
+        ORDER by play_count DESC
+        LIMIT 5`,
         [userId]
     )
 
@@ -117,18 +129,29 @@ app.get("/stats/dashboard/:userId", async (req, res) => {
         WHERE user_id = $1`,
         [userId]
     )
+
     const uniqueArtistResults = await pool.query(`
-        SELECT COUNT(DISTINCT track_id) as unique_tracks
+        SELECT COUNT(DISTINCT artist_id) as unique_artists
         FROM listening_events
         WHERE user_id = $1`,
+        [userId]
+    )
+
+    const uniqueAlbumResults = await pool.query(`
+        SELECT COUNT(DISTINCT album_id) as unique_albums
+        FROM listening_events
+        WHERE user_id = $1 and album_id IS NOT NULL`,
         [userId]
     )
 
     res.json({
         topTracks: topTrackResults.rows,
         topArtists: topArtistResults.rows,
+        topAlbums: topAlbumResults.rows,
         listeningTime: duration_minutes,
-        uniqueTracks: uniqueTrackResults.rows[0].unique_tracks
+        uniqueTracks: uniqueTrackResults.rows[0].unique_tracks,
+        uniqueArtists: uniqueArtistResults.rows[0].unique_artists,
+        uniqueAlbums: uniqueAlbumResults.rows[0].unique_albums
     })
 })
 
