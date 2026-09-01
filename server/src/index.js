@@ -2,6 +2,7 @@ import express from 'express'
 import pool from './db.js'
 import axios from 'axios'
 import spotifyQueue from './queue.js'
+import redisConnection from './redisClient.js'
 
 const app = express()
 
