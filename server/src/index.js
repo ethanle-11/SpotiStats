@@ -49,11 +49,21 @@ app.get("/auth/callback", async (req, res) => {
 
     const userId = result.rows[0].id
 
-    spotifyQueue.add('poll-user', { userId }, {
-        repeat: {
-            every: 15 * 60 * 1000
-        }
-    })
+   
+
+    try {
+        await spotifyQueue.upsertJobScheduler(
+            `poll-user-${userId}`,
+            { every: 15 * 60 * 1000 },
+            {
+                name: 'poll-user',
+                data: { userId }
+            }
+        )
+        console.log("Job scheduled for user:", userId)
+    } catch {
+        console.log("Failed to create job scheduler:", err.message)
+    }
 
     res.json({ message: "Successfully connected to Spotify"})
 
@@ -68,6 +78,88 @@ app.get("/auth/login", (req, res) => {
     })
 
     res.redirect(`https://accounts.spotify.com/authorize?${params.toString()}`)
+})
+
+// dashboard route
+
+app.get("/stats/dashboard/:userId", async (req, res) => {
+    const userId = req.params.userId
+
+    const topTrackResults = await pool.query(`
+        SELECT track_id, track_name, artist_name, COUNT(*) as play_count
+        FROM listening_events
+        JOIN users ON listening_events.user_id = users.id
+        WHERE user_id = $1 AND listening_events.played_at >= users.tracking_started_at
+        GROUP BY track_id, track_name, artist_name
+        ORDER BY play_count DESC
+        LIMIT 5`,
+        [userId]
+    )
+
+    const topArtistResults = await pool.query(`
+        SELECT artist_name, COUNT(*) as play_count
+        FROM listening_events
+        JOIN users ON listening_events.user_id = users.id        
+        WHERE user_id = $1 AND listening_events.played_at >= users.tracking_started_at
+        GROUP BY artist_name
+        ORDER BY play_count DESC
+        LIMIT 5`,
+        [userId]
+    )
+
+    const topAlbumResults = await pool.query(`
+        SELECT album_id, album_name, COUNT(*) as play_count
+        FROM listening_events
+        JOIN users ON listening_events.user_id = users.id
+        WHERE user_id = $1 AND album_id IS NOT NULL AND listening_events.played_at >= users.tracking_started_at
+        GROUP BY album_id, album_name
+        ORDER by play_count DESC
+        LIMIT 5`,
+        [userId]
+    )
+
+    const listeningTimeResults = await pool.query(`
+        SELECT SUM(duration_ms) as total_duration_ms
+        FROM listening_events
+        JOIN users ON listening_events.user_id = users.id
+        WHERE user_id = $1 AND listening_events.played_at >= users.tracking_started_at`,
+        [userId]
+    )
+    const duration_minutes = Math.round(listeningTimeResults.rows[0].total_duration_ms / 60000)
+
+    const uniqueTrackResults = await pool.query(`
+        SELECT COUNT(DISTINCT track_id) as unique_tracks
+        FROM listening_events
+        JOIN users ON listening_events.user_id = users.id
+        WHERE user_id = $1 AND listening_events.played_at >= users.tracking_started_at`,
+        [userId]
+    )
+
+    const uniqueArtistResults = await pool.query(`
+        SELECT COUNT(DISTINCT artist_id) as unique_artists
+        FROM listening_events
+        JOIN users ON listening_events.user_id = users.id
+        WHERE user_id = $1 AND listening_events.played_at >= users.tracking_started_at`,
+        [userId]
+    )
+
+    const uniqueAlbumResults = await pool.query(`
+        SELECT COUNT(DISTINCT album_id) as unique_albums
+        FROM listening_events
+        JOIN users ON listening_events.user_id = users.id
+        WHERE user_id = $1 and album_id IS NOT NULL AND listening_events.played_at >= users.tracking_started_at`,
+        [userId]
+    )
+
+    res.json({
+        topTracks: topTrackResults.rows,
+        topArtists: topArtistResults.rows,
+        topAlbums: topAlbumResults.rows,
+        listeningTime: duration_minutes,
+        uniqueTracks: uniqueTrackResults.rows[0].unique_tracks,
+        uniqueArtists: uniqueArtistResults.rows[0].unique_artists,
+        uniqueAlbums: uniqueAlbumResults.rows[0].unique_albums
+    })
 })
 
 const PORT = process.env.PORT || 3001
