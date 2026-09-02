@@ -1,4 +1,5 @@
 import express from 'express'
+import cors from 'cors'
 import pool from './db.js'
 import axios from 'axios'
 import spotifyQueue from './queue.js'
@@ -7,6 +8,17 @@ import redisConnection from './redisClient.js'
 import { RedisStore } from 'connect-redis'
 
 const app = express()
+
+app.use(cors({
+    origin: (origin, callback) => {
+        if (origin == 'http://localhost:5173') {
+            callback(null, true)
+        } else {
+            callback(new Error('Not allowed by CORS'))
+        }
+    },
+    credentials: true
+}))
 
 app.use(express.json())
 app.use(session({
