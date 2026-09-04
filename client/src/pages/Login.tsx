@@ -11,7 +11,7 @@ function Login() {
                 </p>
 
                 <a
-                    href="http://127.0.0.1:3001/auth/login"
+                    href="/auth/login"
                     className="block w-64 rounded-full bg-[#1DB954] px-6 py-3 text-center font-semibold text-black transition hover:bg-[#1ED760] hover:scale-[1.02]"
                 >
                     Login with Spotify

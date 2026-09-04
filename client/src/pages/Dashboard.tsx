@@ -1,10 +1,22 @@
-function Dashboard() {
+import { useState, useEffect } from 'react'
+import { getDashboardStats } from '../api'
 
-    return (
-        <div className="min-h-screen bg-[#0B0D0C]">
-            <h1>Dashboard coming soon...</h1>
+function Dashboard() {
+    const [listeningData, setListeningData] = useState(null)
+
+    useEffect(() => {
+        const getStats = async () => {
+            setListeningData(await getDashboardStats())
+        }
+        getStats()
+    }, [])
+
+    return listeningData ? listeningData.topTracks.map((track) => (
+        <div key={track.track_id}>
+            <p>{track.track_name}</p>
         </div>
-    )
+    )) : <p>Loading...</p>
+
 }
 
 export default Dashboard
