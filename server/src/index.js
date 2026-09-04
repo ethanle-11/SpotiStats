@@ -59,20 +59,15 @@ app.get("/auth/callback", async (req, res) => {
     const userId = result.rows[0].id
     req.session.userId = userId
 
-    try {
-        await spotifyQueue.upsertJobScheduler(
-            `poll-user-${userId}`,
-            { every: 15 * 60 * 1000 },
-            {
-                name: 'poll-user',
-                data: { userId }
-            }
-        )
-        console.log("Job scheduled for user:", userId)
-    } catch (err) {
-        console.log("Failed to create job scheduler:", err.message)
-    }
-    
+    await spotifyQueue.upsertJobScheduler(
+        `poll-user-${userId}`,
+        { every: 15 * 60 * 1000 },
+        {
+            name: 'poll-user',
+            data: { userId }
+        }
+    )
+        
     res.redirect('http://127.0.0.1:5173/dashboard')
 
 })
