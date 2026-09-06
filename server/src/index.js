@@ -61,7 +61,7 @@ app.get("/auth/callback", async (req, res) => {
 
     await spotifyQueue.upsertJobScheduler(
         `poll-user-${userId}`,
-        { every: 15 * 60 * 1000 },
+        { every: 5 * 60 * 1000 },
         {
             name: 'poll-user',
             data: { userId }

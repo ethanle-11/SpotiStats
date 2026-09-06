@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { getDashboardStats } from '../api'
 import type { DashboardStats } from '../api'
 import RankedList from '../components/RankedList'
+import StatCard from '../components/StatCard'
 
 
 function Dashboard() {
@@ -16,7 +17,20 @@ function Dashboard() {
 
     if (listeningData) {
         return (
-            <div className="min-h-screen bg-[#0B0D0C]">
+            <div className="min-h-screen bg-[#0B0D0C] overscroll-none">
+                {/* Listening Minutes */}
+                <div className="text-center mb-8 pt-8">
+                    <p className="text-6xl text-white font-bold">{listeningData.listeningTime}</p>
+                    <p className="text-lg text-gray-400">minutes listened</p>
+                </div>
+
+                {/* Secondary Stats */}
+                <div className="grid grid-cols-3 gap-4 max-w-md mx-auto mb-12">
+                    <StatCard label="Unique Tracks" value={listeningData.uniqueTracks} />
+                    <StatCard label="Unique Artists" value={listeningData.uniqueArtists} />
+                    <StatCard label="Unique Albums" value={listeningData.uniqueAlbums} />
+                </div>
+
                 {/* Top Tracks */}
                 <RankedList 
                     title="Top Tracks"

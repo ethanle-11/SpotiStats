@@ -7,10 +7,10 @@ type RankedListProps<T> = {
 function RankedList<T>({title, items, getLabel}: RankedListProps<T>) {
     return (
             <div className="flex flex-col items-center">
-                <h2 className="text-lg font-bold mb-2">{title}</h2>
+                <h2 className="text-lg text-white font-bold mb-2">{title}</h2>
                 {items.map((item, index) => (
                     <div key={index}>
-                        <p>{getLabel(item)}</p>
+                        <p className="text-white">{getLabel(item)}</p>
                     </div>
                 ))}
             </div>
