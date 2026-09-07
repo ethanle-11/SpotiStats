@@ -6,8 +6,8 @@ type StatCardProps = {
 function StatCard({ label, value }: StatCardProps) {
     return (
         <div>
-            <p className="text-s text-white font-bold mb-4">{label}</p>
-            <p className="text-md text-gray-400">{value}</p>
+            <p className="text-xs text-gray-400 font-bold mb-2">{label}</p>
+            <p className="text-xl text-white font-bold">{value}</p>
         </div>
     )
 }

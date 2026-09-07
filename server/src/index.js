@@ -92,11 +92,11 @@ app.get("/stats/dashboard", async (req, res) => {
     }
 
     const topTrackResults = await pool.query(`
-        SELECT track_id, track_name, artist_name, COUNT(*) as play_count
+        SELECT track_id, track_name, artist_name, album_image_url, COUNT(*) as play_count
         FROM listening_events
         JOIN users ON listening_events.user_id = users.id
         WHERE user_id = $1 AND listening_events.played_at >= users.tracking_started_at
-        GROUP BY track_id, track_name, artist_name
+        GROUP BY track_id, track_name, artist_name, album_image_url
         ORDER BY play_count DESC
         LIMIT 5`,
         [userId]
@@ -114,11 +114,11 @@ app.get("/stats/dashboard", async (req, res) => {
     )
 
     const topAlbumResults = await pool.query(`
-        SELECT album_id, album_name, COUNT(*) as play_count
+        SELECT album_id, album_name, album_image_url, COUNT(*) as play_count
         FROM listening_events
         JOIN users ON listening_events.user_id = users.id
         WHERE user_id = $1 AND album_id IS NOT NULL AND listening_events.played_at >= users.tracking_started_at
-        GROUP BY album_id, album_name
+        GROUP BY album_id, album_name, album_image_url
         ORDER by play_count DESC
         LIMIT 5`,
         [userId]

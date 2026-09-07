@@ -25,36 +25,23 @@ function Dashboard() {
                 </div>
 
                 {/* Secondary Stats */}
-                <div className="grid grid-cols-3 gap-4 max-w-md mx-auto mb-12">
+                <div className="text-center grid grid-cols-3 gap-4 max-w-md mx-auto mb-16">
                     <StatCard label="Unique Tracks" value={listeningData.uniqueTracks} />
                     <StatCard label="Unique Artists" value={listeningData.uniqueArtists} />
                     <StatCard label="Unique Albums" value={listeningData.uniqueAlbums} />
                 </div>
 
-                {/* Top Tracks */}
-                <RankedList 
-                    title="Top Tracks"
-                    items={listeningData.topTracks}
-                    getLabel={(track) => track.track_name}
-                />
+                {/* Ranked Lists */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <RankedList title="Top Tracks" items={listeningData.topTracks} getLabel={(track) => track.track_name} getImage={(track) => track.album_image_url} getPlayCount={(track) => track.play_count}/>
+                    <RankedList title="Top Artists" items={listeningData.topArtists} getLabel={(artist) => artist.artist_name} getPlayCount={(artist) => artist.play_count}/>
+                    <RankedList title="Top Albums" items={listeningData.topAlbums} getLabel={(album) => album.album_name} getImage={(album) => album.album_image_url} getPlayCount={(album) => album.play_count}/>
+                </div>
 
-                {/* Top Artists */}
-                <RankedList 
-                    title="Top Artists"
-                    items={listeningData.topArtists}
-                    getLabel={(artist) => artist.artist_name}
-                />
-
-                {/* Top Albums */}
-                <RankedList 
-                    title="Top Albums"
-                    items={listeningData.topAlbums}
-                    getLabel={(album) => album.album_name}
-                />
             </div>
         )
     } else {
-        <p>Loading...</p>
+        return (<p>Loading...</p>)
     }
 
 }

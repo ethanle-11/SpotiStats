@@ -5,6 +5,7 @@ type Track = {
     track_name: string
     artist_name: string
     play_count: string
+    album_image_url: string
 }
 
 type Artist = {
@@ -16,6 +17,7 @@ type Album = {
     album_id: string
     album_name: string
     play_count: string
+    album_image_url: string
 }
 
 export type DashboardStats = {
