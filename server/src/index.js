@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { response } from 'express'
 import pool from './db.js'
 import axios from 'axios'
 import spotifyQueue from './queue.js'
@@ -59,21 +59,16 @@ app.get("/auth/callback", async (req, res) => {
     const userId = result.rows[0].id
     req.session.userId = userId
 
-    try {
-        await spotifyQueue.upsertJobScheduler(
-            `poll-user-${userId}`,
-            { every: 15 * 60 * 1000 },
-            {
-                name: 'poll-user',
-                data: { userId }
-            }
-        )
-        console.log("Job scheduled for user:", userId)
-    } catch (err) {
-        console.log("Failed to create job scheduler:", err.message)
-    }
-    
-    res.redirect(`/stats/dashboard`)
+    await spotifyQueue.upsertJobScheduler(
+        `poll-user-${userId}`,
+        { every: 5 * 60 * 1000 },
+        {
+            name: 'poll-user',
+            data: { userId }
+        }
+    )
+        
+    res.redirect('http://127.0.0.1:5173/dashboard')
 
 })
 
@@ -97,33 +92,34 @@ app.get("/stats/dashboard", async (req, res) => {
     }
 
     const topTrackResults = await pool.query(`
-        SELECT track_id, track_name, artist_name, COUNT(*) as play_count
+        SELECT track_id, track_name, artist_name, album_image_url, COUNT(*) as play_count
         FROM listening_events
         JOIN users ON listening_events.user_id = users.id
         WHERE user_id = $1 AND listening_events.played_at >= users.tracking_started_at
-        GROUP BY track_id, track_name, artist_name
+        GROUP BY track_id, track_name, artist_name, album_image_url
         ORDER BY play_count DESC
         LIMIT 5`,
         [userId]
     )
 
     const topArtistResults = await pool.query(`
-        SELECT artist_name, COUNT(*) as play_count
+        SELECT listening_events.artist_name, listening_events.artist_id, artist_image_url, COUNT(*) as play_count
         FROM listening_events
         JOIN users ON listening_events.user_id = users.id        
+        JOIN artists ON listening_events.artist_id = artists.artist_id
         WHERE user_id = $1 AND listening_events.played_at >= users.tracking_started_at
-        GROUP BY artist_name
+        GROUP BY listening_events.artist_name, listening_events.artist_id, artist_image_url
         ORDER BY play_count DESC
         LIMIT 5`,
         [userId]
-    )
+    )  
 
     const topAlbumResults = await pool.query(`
-        SELECT album_id, album_name, COUNT(*) as play_count
+        SELECT album_id, album_name, album_image_url, COUNT(*) as play_count
         FROM listening_events
         JOIN users ON listening_events.user_id = users.id
         WHERE user_id = $1 AND album_id IS NOT NULL AND listening_events.played_at >= users.tracking_started_at
-        GROUP BY album_id, album_name
+        GROUP BY album_id, album_name, album_image_url
         ORDER by play_count DESC
         LIMIT 5`,
         [userId]
