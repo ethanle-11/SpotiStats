@@ -83,7 +83,7 @@ app.get("/auth/login", (req, res) => {
     res.redirect(`https://accounts.spotify.com/authorize?${params.toString()}`)
 })
 
-app.post("/post/logout", (req, res) => {
+app.post("/auth/logout", (req, res) => {
     req.session.destroy((err) => {
         if(err) {
             res.status(500).json("Failed to logout")

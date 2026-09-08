@@ -12,12 +12,8 @@ function Dashboard() {
     const navigate = useNavigate()
 
     const handleLogout = async () => {
-        await axios.post(
-            'http://127.0.0.1:5173/auth/logout',
-            {},
-            { withCredentials: true }
-        )
-        navigate('/')
+        await axios.post('/auth/logout',{})
+        navigate('/', {replace: true})
     }
 
     useEffect(() => {
