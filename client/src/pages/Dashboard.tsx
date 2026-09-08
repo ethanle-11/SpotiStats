@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import { getDashboardStats } from '../api'
 import type { DashboardStats } from '../api'
 import RankedList from '../components/RankedList'
@@ -7,6 +9,16 @@ import StatCard from '../components/StatCard'
 
 function Dashboard() {
     const [listeningData, setListeningData] = useState<DashboardStats | null> (null)
+    const navigate = useNavigate()
+
+    const handleLogout = async () => {
+        await axios.post(
+            'http://127.0.0.1:5173/auth/logout',
+            {},
+            { withCredentials: true }
+        )
+        navigate('/')
+    }
 
     useEffect(() => {
         const getStats = async () => {
@@ -18,6 +30,11 @@ function Dashboard() {
     if (listeningData) {
         return (
             <div className="min-h-screen bg-[#0B0D0C] overscroll-none">
+                <button 
+                    onClick={handleLogout}
+                    className="absolute top-6 right-8 px-5 py-2 border border-[#1DB954] text-[#1DB954] font-semibold rounded-full hover:bg-[#1DB954] hover:text-black transition-colors cursor-pointer"
+                >Logout</button>
+
                 {/* Listening Minutes */}
                 <div className="text-center mb-8 pt-8">
                     <p className="text-6xl text-white font-bold">{listeningData.listeningTime}</p>
@@ -41,7 +58,11 @@ function Dashboard() {
             </div>
         )
     } else {
-        return (<p>Loading...</p>)
+        return (
+            <div className="min-h-screen bg-[#0B0D0C] overscroll-none">
+                <h1 className="text-center">No Listening Data</h1>
+            </div>
+        )
     }
 
 }
