@@ -34,7 +34,7 @@ function Dashboard() {
                 {/* Ranked Lists */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <RankedList title="Top Tracks" items={listeningData.topTracks} getLabel={(track) => track.track_name} getImage={(track) => track.album_image_url} getPlayCount={(track) => track.play_count}/>
-                    <RankedList title="Top Artists" items={listeningData.topArtists} getLabel={(artist) => artist.artist_name} getPlayCount={(artist) => artist.play_count}/>
+                    <RankedList title="Top Artists" items={listeningData.topArtists} getLabel={(artist) => artist.artist_name} getImage={(artist) => artist.artist_image_url} getPlayCount={(artist) => artist.play_count}/>
                     <RankedList title="Top Albums" items={listeningData.topAlbums} getLabel={(album) => album.album_name} getImage={(album) => album.album_image_url} getPlayCount={(album) => album.play_count}/>
                 </div>
 

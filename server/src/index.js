@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { response } from 'express'
 import pool from './db.js'
 import axios from 'axios'
 import spotifyQueue from './queue.js'
@@ -103,15 +103,16 @@ app.get("/stats/dashboard", async (req, res) => {
     )
 
     const topArtistResults = await pool.query(`
-        SELECT artist_name, COUNT(*) as play_count
+        SELECT listening_events.artist_name, listening_events.artist_id, artist_image_url, COUNT(*) as play_count
         FROM listening_events
         JOIN users ON listening_events.user_id = users.id        
+        JOIN artists ON listening_events.artist_id = artists.artist_id
         WHERE user_id = $1 AND listening_events.played_at >= users.tracking_started_at
-        GROUP BY artist_name
+        GROUP BY listening_events.artist_name, listening_events.artist_id, artist_image_url
         ORDER BY play_count DESC
         LIMIT 5`,
         [userId]
-    )
+    )  
 
     const topAlbumResults = await pool.query(`
         SELECT album_id, album_name, album_image_url, COUNT(*) as play_count

@@ -11,6 +11,7 @@ type Track = {
 type Artist = {
     artist_name: string
     play_count: string
+    artist_image_url: string
 }
 
 type Album = {

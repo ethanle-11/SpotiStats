@@ -33,6 +33,7 @@ const pollUser = async (job) => {
         }
     })
 
+    const artistIds = new Set()
     for (const item of listeningData.data.items) {
         await pool.query(`
             INSERT INTO listening_events (
@@ -42,8 +43,30 @@ const pollUser = async (job) => {
             ON CONFLICT (user_id, track_id, played_at) DO NOTHING`,
             [userId, item.track.id, item.track.name, item.track.artists[0].name, item.track.duration_ms, item.played_at, item.track.artists[0].id, item.track.album.id, item.track.album.name, item.track.album.images[0].url]
         )
+        artistIds.add(item.track.artists[0].id)
     }
+    const artistIdArray = Array.from(artistIds)
 
+    const artistResult = await pool.query(`SELECT artist_id FROM artists WHERE artist_id = ANY($1)`, [artistIdArray])
+    const existingIds = new Set(artistResult.rows.map(row => row.artist_id))
+    const missingIds = artistIdArray.filter(id => !existingIds.has(id))
+
+    for (const id of missingIds) {
+        const artistData = await axios.get(`https://api.spotify.com/v1/artists/${id}`, {
+            headers: {
+                'Authorization': 'Bearer ' + access_token 
+            }
+        })
+
+        await pool.query(`
+            INSERT INTO artists (
+                artist_id, artist_name, artist_image_url
+            )
+            VALUES ($1, $2, $3)
+            ON CONFLICT (artist_id) DO NOTHING`,
+            [artistData.data.id, artistData.data.name, artistData.data.images[0].url]
+        )
+    }
 }
 
 const spotifyPoller = new Worker('spotify-polling', pollUser, { connection })
