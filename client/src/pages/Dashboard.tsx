@@ -31,9 +31,15 @@ function Dashboard() {
         getStats()
     }, [])
 
+
     if (loading) {
         return (
             <p className="text-white">Loading...</p>
+        )
+    }
+    else if (error) {
+        return (
+            <h1 className="text-white text-center">Couldn't retrieve listening data</h1>
         )
     }
     else if (!loading && listeningData && listeningData.topTracks.length === 0) {
