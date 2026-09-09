@@ -9,6 +9,8 @@ import StatCard from '../components/StatCard'
 
 function Dashboard() {
     const [listeningData, setListeningData] = useState<DashboardStats | null> (null)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(false)
     const navigate = useNavigate()
 
     const handleLogout = async () => {
@@ -18,12 +20,28 @@ function Dashboard() {
 
     useEffect(() => {
         const getStats = async () => {
-            setListeningData(await getDashboardStats())
+            try {
+                setListeningData(await getDashboardStats())
+            } catch (err) {
+                setError(true)
+            } finally {
+                setLoading(false)
+            }
         }
         getStats()
     }, [])
 
-    if (listeningData) {
+    if (loading) {
+        return (
+            <p className="text-white">Loading...</p>
+        )
+    }
+    else if (!loading && listeningData && listeningData.topTracks.length === 0) {
+        return (
+            <h1 className="text-white text-center">No Listening Data</h1>
+        )
+    }
+    else if (listeningData && listeningData.topTracks.length > 0) {
         return (
             <div className="min-h-screen bg-[#0B0D0C] overscroll-none">
                 <button 
@@ -53,14 +71,7 @@ function Dashboard() {
 
             </div>
         )
-    } else {
-        return (
-            <div className="min-h-screen bg-[#0B0D0C] overscroll-none">
-                <h1 className="text-center">No Listening Data</h1>
-            </div>
-        )
     }
-
 }
 
 export default Dashboard
