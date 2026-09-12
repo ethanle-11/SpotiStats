@@ -26,7 +26,8 @@ A personal music analytics platform built on the Spotify Web API, providing cont
 | Infrastructure | Docker, Docker Compose |
 
 
-The web server and the background worker are deliberately separate processes — the worker's job (polling Spotify, refreshing tokens, writing to Postgres) runs independently of whether anyone is actively using the site, and a slow or failing job never affects the responsiveness of the web app.
+The web server and the background worker are deliberately separate processes — the worker's job (polling Spotify, refreshing tokens, writing to Postgres) runs independently of whether anyone is actively using the site, and a slow or failing job never affects the responsiveness of the web app.<img width="3418" height="1966" alt="Screen Recording 2026-09-12 at 5 25 59 PM" src="https://github.com/user-attachments/assets/9cf76dbf-8ff3-4fef-8374-718bd85b6c47" />
+
 
 ## Getting started
 
