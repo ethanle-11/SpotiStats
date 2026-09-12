@@ -31,7 +31,9 @@ export type DashboardStats = {
     uniqueAlbums: string
 }
 
-export const getDashboardStats = async (): Promise<DashboardStats> => {
-    const response = await axios.get(`/stats/dashboard`)
+export const getDashboardStats = async (range?: string): Promise<DashboardStats> => {
+    const response = await axios.get(`/stats/dashboard`, {
+        params: {range}
+    })
     return response.data
 }

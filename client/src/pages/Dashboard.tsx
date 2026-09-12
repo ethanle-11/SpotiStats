@@ -11,7 +11,14 @@ function Dashboard() {
     const [listeningData, setListeningData] = useState<DashboardStats | null> (null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(false)
+    const[range, setRange] = useState('joined')
     const navigate = useNavigate()
+    const rangeOptions = [
+        {label: "Since You Joined Spotistats", value: "joined"},
+        {label: "This Week", value: "week"},
+        {label: "This Month", value: "month"},
+        {label: "This Year", value: "year"}
+    ]
 
     const handleLogout = async () => {
         await axios.post('/auth/logout',{})
@@ -21,7 +28,7 @@ function Dashboard() {
     useEffect(() => {
         const getStats = async () => {
             try {
-                setListeningData(await getDashboardStats())
+                setListeningData(await getDashboardStats(range))
             } catch (err) {
                 setError(true)
             } finally {
@@ -29,7 +36,7 @@ function Dashboard() {
             }
         }
         getStats()
-    }, [])
+    }, [range])
 
 
     if (loading) {
@@ -50,9 +57,25 @@ function Dashboard() {
     else if (listeningData && listeningData.topTracks.length > 0) {
         return (
             <div className="min-h-screen bg-[#0B0D0C] overscroll-none">
+                <div className="absolute top-6 left-8 flex">
+                    {rangeOptions.map((option, index) => (
+                        <div 
+                        key={index}
+                        className={`px-4 py-2 text-sm font-semibold transition-colors ${
+                            option.value === range
+                              ? 'bg-[#1DB954] text-black'
+                              : 'bg-[#1a1a1a] text-white hover:bg-[#2a2a2a]'
+                          } ${index === 0 ? 'rounded-l-full' : ''} ${
+                            index === rangeOptions.length - 1 ? 'rounded-r-full' : ''
+                          }`}>
+                            <button onClick={() => setRange(option.value)}>{option.label}</button>
+                        </div>
+                    ))}
+                </div>
+
                 <button 
                     onClick={handleLogout}
-                    className="absolute top-6 right-8 px-5 py-2 border border-[#1DB954] text-[#1DB954] font-semibold rounded-full hover:bg-[#1DB954] hover:text-black transition-colors cursor-pointer"
+                    className="absolute top-6 right-8 px-4 py-2 text-sm font-semibold bg-[#1a1a1a] text-white rounded-full hover:bg-[#1DB954] hover:text-black transition-colors cursor-pointer"
                 >Logout</button>
 
                 {/* Listening Minutes */}
