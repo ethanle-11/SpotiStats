@@ -102,11 +102,21 @@ app.get("/stats/dashboard", async (req, res) => {
         return res.redirect(`/auth/login`)
     }
 
+    const rangeBoundaries = {
+        week: `DATE_TRUNC('week', NOW())`,
+        month: `DATE_TRUNC('month', NOW())`,
+        year: `DATE_TRUNC('year', NOW())`,
+        joined: `users.tracking_started_at`
+    }
+    const range = req.query.range
+    const boundary = rangeBoundaries[range] || rangeBoundaries.joined
+    console.log('range:', range, 'boundary:', boundary)
+
     const topTrackResults = await pool.query(`
         SELECT track_id, track_name, artist_name, album_image_url, COUNT(*) as play_count
         FROM listening_events
         JOIN users ON listening_events.user_id = users.id
-        WHERE user_id = $1 AND listening_events.played_at >= users.tracking_started_at
+        WHERE user_id = $1 AND listening_events.played_at >= ${boundary}
         GROUP BY track_id, track_name, artist_name, album_image_url
         ORDER BY play_count DESC
         LIMIT 5`,
@@ -118,7 +128,7 @@ app.get("/stats/dashboard", async (req, res) => {
         FROM listening_events
         JOIN users ON listening_events.user_id = users.id        
         JOIN artists ON listening_events.artist_id = artists.artist_id
-        WHERE user_id = $1 AND listening_events.played_at >= users.tracking_started_at
+        WHERE user_id = $1 AND listening_events.played_at >= ${boundary}
         GROUP BY listening_events.artist_name, listening_events.artist_id, artist_image_url
         ORDER BY play_count DESC
         LIMIT 5`,
@@ -129,7 +139,7 @@ app.get("/stats/dashboard", async (req, res) => {
         SELECT album_id, album_name, album_image_url, COUNT(*) as play_count
         FROM listening_events
         JOIN users ON listening_events.user_id = users.id
-        WHERE user_id = $1 AND album_id IS NOT NULL AND listening_events.played_at >= users.tracking_started_at
+        WHERE user_id = $1 AND album_id IS NOT NULL AND listening_events.played_at >= ${boundary}
         GROUP BY album_id, album_name, album_image_url
         ORDER by play_count DESC
         LIMIT 5`,
@@ -140,7 +150,7 @@ app.get("/stats/dashboard", async (req, res) => {
         SELECT SUM(duration_ms) as total_duration_ms
         FROM listening_events
         JOIN users ON listening_events.user_id = users.id
-        WHERE user_id = $1 AND listening_events.played_at >= users.tracking_started_at`,
+        WHERE user_id = $1 AND listening_events.played_at >= ${boundary}`,
         [userId]
     )
     const duration_minutes = Math.round(listeningTimeResults.rows[0].total_duration_ms / 60000)
@@ -149,7 +159,7 @@ app.get("/stats/dashboard", async (req, res) => {
         SELECT COUNT(DISTINCT track_id) as unique_tracks
         FROM listening_events
         JOIN users ON listening_events.user_id = users.id
-        WHERE user_id = $1 AND listening_events.played_at >= users.tracking_started_at`,
+        WHERE user_id = $1 AND listening_events.played_at >= ${boundary}`,
         [userId]
     )
 
@@ -157,7 +167,7 @@ app.get("/stats/dashboard", async (req, res) => {
         SELECT COUNT(DISTINCT artist_id) as unique_artists
         FROM listening_events
         JOIN users ON listening_events.user_id = users.id
-        WHERE user_id = $1 AND listening_events.played_at >= users.tracking_started_at`,
+        WHERE user_id = $1 AND listening_events.played_at >= ${boundary}`,
         [userId]
     )
 
@@ -165,7 +175,7 @@ app.get("/stats/dashboard", async (req, res) => {
         SELECT COUNT(DISTINCT album_id) as unique_albums
         FROM listening_events
         JOIN users ON listening_events.user_id = users.id
-        WHERE user_id = $1 and album_id IS NOT NULL AND listening_events.played_at >= users.tracking_started_at`,
+        WHERE user_id = $1 and album_id IS NOT NULL AND listening_events.played_at >= ${boundary}`,
         [userId]
     )
 
